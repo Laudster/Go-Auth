@@ -8,3 +8,86 @@
 
 	<input type="submit" value="Register">
 </form>
+
+
+<form action="/login" method="POST">
+	<input type="name" name="username">
+	<input type="password" name="password">
+
+	<input type="submit" value="Login">
+</form>
+
+<form id="protectedForm" action="/protected" method="POST">
+	<div>
+	  <label for="username">Username:</label>
+	  <input type="text" id="username" name="username" />
+	</div>
+  
+	<input type="hidden" id="csrf_token" name="csrf_token" value="" />
+  
+	<button type="submit">Protected</button>
+  </form>
+  
+  <script>
+	document.addEventListener("DOMContentLoaded", function () {
+	  // Function to get a cookie value by name
+	  function getCookie(name) {
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2)
+		  return parts
+			.pop()
+			.split(";")
+			.shift();
+	  }
+  
+	  // Get the CSRF token from the cookie
+	  const csrfToken = getCookie("csrf_token");
+  
+	  // Add the CSRF token to the hidden input field
+	  if (csrfToken) {
+		document.getElementById("csrf_token").value = csrfToken;
+	  } else {
+		console.error("CSRF token not found in cookie!");
+		// Optionally disable the form or display an error message to the user
+	  }
+  
+	  //Interception of form submission for use in XHR
+	  document
+		.getElementById("protectedForm")
+		.addEventListener("submit", function (event) {
+		  // Prevent the default form submission
+		  event.preventDefault();
+  
+		  // Get the form data
+		  const formData = new FormData(this);
+  
+		  // Create a new XMLHttpRequest object
+		  const xhr = new XMLHttpRequest();
+  
+		  // Configure the request
+		  xhr.open("POST", this.action);
+  
+		  // Set the CSRF token in the header
+		  xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+  
+		  // Define what happens on successful data submission
+		  xhr.onload = function () {
+			if (xhr.status === 200) {
+			  alert(xhr.responseText); // Display success message
+			} else {
+			  alert("Error: " + xhr.responseText); // Display error message
+			}
+		  };
+  
+		  // Define what happens in case of error
+		  xhr.onerror = function () {
+			alert("Request failed");
+		  };
+  
+		  // Send the form data
+		  xhr.send(formData);
+		});
+	});
+  </script>
+  
