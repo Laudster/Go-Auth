@@ -1,9 +1,12 @@
 package main
 
-import(
+import (
 	"crypto/rand"
 	"encoding/base64"
 	"log"
+	"net/http"
+	"time"
+
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -26,4 +29,35 @@ func generateToken(length int) string {
 	}
 
 	return base64.URLEncoding.EncodeToString(bytes)
+}
+
+func logIn(sessionToken string, csrfToken string, user Login, username string, w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    sessionToken,
+		Expires:  time.Now().Add(168 * time.Hour),
+		HttpOnly: true,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf_token",
+		Value:    csrfToken,
+		Expires:  time.Now().Add(168 * time.Hour),
+		HttpOnly: false,
+	})
+
+	user.SessionToken = sessionToken
+	user.CSRFToken = csrfToken
+
+	users[username] = user
+}
+
+func getUser(token string) string {
+	for username, login := range users {
+		if login.SessionToken == token {
+			return username
+		}
+	}
+
+	return ""
 }
