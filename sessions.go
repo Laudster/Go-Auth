@@ -3,49 +3,61 @@ package main
 import (
 	"errors"
 	"net/http"
+	"database/sql"
+	_"github.com/mattn/go-sqlite3"
 )
+
+type User struct {
+	Id int
+	Name string
+	Hash string
+	Session string
+	Csrf string
+}
 
 var AuthError = errors.New("Unauthorized")
 
-func Authorize(r *http.Request) error {
-	st, fin := r.Cookie("session_token")
+func getUser(r *http.Request) (User, error) {
+	db, err := sql.Open("sqlite3", "users.db")
 
-	if fin != nil {
-		return AuthError
+	var user User
+
+	if err != nil {
+		return user, AuthError
 	}
 
-	username := getUser(st.Value)
-
-	user, ok := users[username]
-
-	if !ok {
-		return AuthError
-	}
+	defer db.Close()
 
 	st, err := r.Cookie("session_token")
 
-	if err != nil || st.Value == "" || st.Value != user.SessionToken {
+	if err != nil {
+		return user, AuthError
+	}
+
+	userCheck := "select id, name, hash, session, csrf from users where session = $1"
+
+	err = db.QueryRow(userCheck, st.Value).Scan(&user.Id, &user.Name, &user.Hash, &user.Session, &user.Csrf)
+
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func csrfCheck(r *http.Request, csrfToken string) error {
+	db, err := sql.Open("sqlite3", "users.db")
+
+	if err != nil {
 		return AuthError
 	}
 
-	return nil
-}
-
-func csrfCheck(r *http.Request) error {
-	st, _ := r.Cookie("session_token")
-
-	username := getUser(st.Value)
-
-	user, ok := users[username]
-
-	if !ok {
-		return errors.New("User does not exist")
-	}
+	defer db.Close()
 
 	csrf := r.FormValue("csrf_token")
 
-	if csrf != user.CSRFToken || csrf == "" {
-		return errors.New("Csrf token not correct " + csrf)
+	if csrf != csrfToken || csrf == "" {
+		return AuthError
 	}
 
 	return nil

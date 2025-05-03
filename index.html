@@ -1,13 +1,7 @@
 <h1> Login Page </h1>
 
-<p> Log into the login page </p>
-
 {{if .}}
-	<form id="protectedForm" action="/protected" method="POST">
-		<input type="hidden" class="csrf_token" name="csrf_token" value="" />
-	
-		<button type="submit">Protected</button>
-	</form>
+	<p> Hello {{.}} </p>
 
 	<form action="/logout" method="POST">
 		<input type="hidden" class="csrf_token" name="csrf_token" value="" />
@@ -16,6 +10,7 @@
 	</form>
 
 {{else}}
+	<p> Log into the login page </p>
 
 	<form action="/register" method="POST">
 		<input type="name" name="username">
