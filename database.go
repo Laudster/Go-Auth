@@ -6,14 +6,12 @@ import (
 	_"github.com/mattn/go-sqlite3"
 )
 
-func createDB() {
+func createDB() *sql.DB {
 	db, err := sql.Open("sqlite3", "users.db")
 
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	defer db.Close()
 
 	sqlStmt := `
 		create table if not exists users (
@@ -30,4 +28,6 @@ func createDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return db
 }

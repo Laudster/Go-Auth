@@ -1,7 +1,7 @@
 <h1> Login Page </h1>
 
-{{if .}}
-	<p> Hello {{.}} </p>
+{{if index . 0}}
+	<p> Hello {{index . 0}} </p>
 
 	<form action="/logout" method="POST">
 		<input type="hidden" class="csrf_token" name="csrf_token" value="" />
@@ -11,6 +11,8 @@
 
 {{else}}
 	<p> Log into the login page </p>
+
+	<p style="color: red;"> {{index . 1}} </p>
 
 	<form action="/register" method="POST">
 		<input type="name" name="username">

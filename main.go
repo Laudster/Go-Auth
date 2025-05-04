@@ -3,6 +3,9 @@ package main
 import (
 	"html/template"
 	"net/http"
+	"database/sql"
+	"fmt"
+	"net/url"
 )
 
 // https://www.youtube.com/watch?v=OmLdoEMcr_Y&t=74s
@@ -13,7 +16,7 @@ type Login struct {
 	CSRFToken      string
 }
 
-var users = map[string]Login{}
+var db *sql.DB
 
 var templates = template.Must(template.ParseFiles("index.html"))
 
@@ -29,7 +32,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 	err := registerate(username, password)
 
 	if err != nil {
-		http.Error(w, "Registering failed " + err.Error(), http.StatusUnauthorized)
+		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
 
@@ -39,7 +43,8 @@ func register(w http.ResponseWriter, r *http.Request) {
 	err = loggingIn(sessionToken, csrfToken, username, password, w)
 
 	if err != nil {
-		http.Error(w, "Login failed " + err.Error(), http.StatusUnauthorized)
+		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
 
@@ -61,7 +66,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 	err := loggingIn(sessionToken, csrfToken, username, password, w)
 
 	if err != nil {
-		http.Error(w, "Login failed " + err.Error(), http.StatusInternalServerError)
+		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
 
@@ -99,7 +105,11 @@ func logout(w http.ResponseWriter, r *http.Request) {
 func mainPage(w http.ResponseWriter, r *http.Request) {
 	user, _ := getUser(r)
 
-	err := templates.ExecuteTemplate(w, "index.html", user.Name)
+	errorMessage := r.URL.Query().Get("error")
+
+	pageData := []string{user.Name, errorMessage}
+
+	err := templates.ExecuteTemplate(w, "index.html", pageData)
 
 	if err != nil {
 		http.Error(w, "Could not load template", http.StatusInternalServerError)
@@ -108,7 +118,9 @@ func mainPage(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	createDB()
+	db = createDB()
+
+	defer db.Close()
 
 	http.HandleFunc("/register", register)
 	http.HandleFunc("/login", login)

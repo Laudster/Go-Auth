@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"net/http"
-	"database/sql"
 	_"github.com/mattn/go-sqlite3"
 )
 
@@ -18,15 +17,7 @@ type User struct {
 var AuthError = errors.New("Unauthorized")
 
 func getUser(r *http.Request) (User, error) {
-	db, err := sql.Open("sqlite3", "users.db")
-
 	var user User
-
-	if err != nil {
-		return user, AuthError
-	}
-
-	defer db.Close()
 
 	st, err := r.Cookie("session_token")
 
@@ -46,14 +37,6 @@ func getUser(r *http.Request) (User, error) {
 }
 
 func csrfCheck(r *http.Request, csrfToken string) error {
-	db, err := sql.Open("sqlite3", "users.db")
-
-	if err != nil {
-		return AuthError
-	}
-
-	defer db.Close()
-
 	csrf := r.FormValue("csrf_token")
 
 	if csrf != csrfToken || csrf == "" {
