@@ -1,10 +1,10 @@
 package main
 
 import (
-	"html/template"
-	"net/http"
 	"database/sql"
 	"fmt"
+	"html/template"
+	"net/http"
 	"net/url"
 )
 
@@ -27,12 +27,13 @@ func register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := r.FormValue("username")
+	email := r.FormValue("email")
 	password := r.FormValue("password")
 
-	err := registerate(username, password)
+	err := registerate(username, password, email)
 
 	if err != nil {
-		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		redirectURL := fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
@@ -43,7 +44,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	err = loggingIn(sessionToken, csrfToken, username, password, w)
 
 	if err != nil {
-		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		redirectURL := fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
@@ -66,7 +67,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	err := loggingIn(sessionToken, csrfToken, username, password, w)
 
 	if err != nil {
-		redirectURL :=  fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
+		redirectURL := fmt.Sprintf("/?error=%s", url.QueryEscape(err.Error()))
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return
 	}
@@ -91,11 +92,11 @@ func logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	
+
 	err = loggingOut(w, user.Name)
 
 	if err != nil {
-		http.Error(w, "Error logging out " + err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error logging out "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

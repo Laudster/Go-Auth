@@ -3,11 +3,13 @@ package main
 import (
 	"errors"
 	"net/http"
+	"regexp"
 	"time"
-	_"github.com/mattn/go-sqlite3"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func registerate(username string, password string) error {
+func registerate(username string, password string, email string) error {
 	if len(password) < 8 || len(username) < 2 {
 		return errors.New("Password/Username bad")
 	}
@@ -28,7 +30,17 @@ func registerate(username string, password string) error {
 
 	hash, _ := hashPassword(password)
 
-	_, err = db.Exec("insert into users(name, hash) values($1, $2)", username, hash)
+	if len(email) > 4 {
+		matched, _ := regexp.Match(`^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$`, []byte(email))
+
+		if !matched {
+			email = ""
+		}
+	} else {
+		email = ""
+	}
+
+	_, err = db.Exec("insert into users(name, email, hash) values($1, $2, $3)", username, email, hash)
 
 	if err != nil {
 		return err
@@ -60,6 +72,7 @@ func loggingIn(sessionToken string, csrfToken string, username string, password 
 		Value:    csrfToken,
 		Expires:  time.Now().Add(168 * time.Hour),
 		HttpOnly: false,
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	_, err = db.Exec("update users set session = $1, csrf = $2 where name = $3", sessionToken, csrfToken, username)

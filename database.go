@@ -3,7 +3,8 @@ package main
 import (
 	"database/sql"
 	"log"
-	_"github.com/mattn/go-sqlite3"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func createDB() *sql.DB {
@@ -17,6 +18,7 @@ func createDB() *sql.DB {
 		create table if not exists users (
 			id integer not null primary key autoincrement,
 			name text,
+			email text, 
 			hash text,
 			session text,
 			csrf text

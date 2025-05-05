@@ -17,6 +17,9 @@
 	<form action="/register" method="POST">
 		<input type="name" name="username">
 		<input type="password" name="password">
+		<input id="email" type="email" name="email" hidden>
+		<label for="showEmail"> Add email for security </label>
+		<input id="showEmail" type="checkbox">
 
 		<input type="submit" value="Register">
 	</form>
@@ -39,6 +42,10 @@
 		  return parts.pop().split(";").shift();
 	}
 
+	document.getElementById("showEmail").addEventListener("change", function() {
+		document.getElementById("email").hidden = !document.getElementById("showEmail").checked
+	});
+
 	document.addEventListener("DOMContentLoaded", function () {
 		const csrfToken = getCookie("csrf_token");
 
@@ -51,4 +58,3 @@
 	  	}
 	});
   </script>
-  
